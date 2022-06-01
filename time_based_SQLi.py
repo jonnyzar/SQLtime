@@ -46,7 +46,7 @@ def getTiming(sTime,eTime,inTrigger):
     else:
         return False
 
-def sendRequest(URL, cookies):
+def sendRequest(URL, inCookies):
     '''
     Sends reuquest to target URL with specified payload
 
@@ -55,7 +55,7 @@ def sendRequest(URL, cookies):
 
     #GET
 
-    res = requests.get(URL)
+    res = requests.get(URL,cookies = inCookies)
 
     try:
         res.raise_for_status()
@@ -79,12 +79,7 @@ def main():
     args = parser.parse_args()
 
     targetURL = args.URL
-    cookies = dict(item.split("=") for item in args.cookies.split(", "))
-
-    #vulnerable parameters to be sent along. In this case: cookie
-
-    #cookies = dict()
-
+    cookies = dict(item.split("=") for item in args.cookies.strip().split(";"))
     
     inTrigger = 10
 
