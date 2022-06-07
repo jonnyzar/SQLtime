@@ -21,8 +21,7 @@
 
 import requests
 import sys
-import urllib.parse
-#import argparse
+import argparse
 
 def getArguments():
     if len(sys.argv) > 1:
@@ -61,7 +60,6 @@ def sendRequest(URL, inCookies):
     try:
         res.raise_for_status()
         print(res.status_code)
-        print(res.request.headers)
     except Exception as e:
         print(e)
 
@@ -71,14 +69,21 @@ def sendRequest(URL, inCookies):
 
 def main():
 
-    targetURL = "https://0ae600ec04187f01c093030d004b0005.web-security-academy.net/filter?category=Pets"
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument('URL', type=str, help='target URL')
+    parser.add_argument('-c', '--cookies', default="", type=str, help="URL encoded cookie payload separated by semicolon \
+        :some_cookie1 = URL encoded value1; some_cookie2 = URL encoded value2")
 
-    #defining single cookie parameters
-    trID="'"
-    sessID="2HKUEHRSLDclQD2Df7U77gU6nvrq3csb"
+    #parse inputs
+    args = parser.parse_args()
 
-    cookies = dict(TrackingId = urllib.parse.quote(trID), session = sessID)
+    targetURL = args.URL
 
+    try:
+        cookies = dict(item.split("=") for item in args.cookies.strip().split(";"))
+    except:
+        print("Cookie format is wrong OR you have not url encoded the values.")
     
     inTrigger = 10
 
