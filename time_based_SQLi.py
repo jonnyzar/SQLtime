@@ -22,6 +22,7 @@
 import requests
 import sys
 import argparse
+import urllib.parse as up
 
 def getArguments():
     if len(sys.argv) > 1:
@@ -72,18 +73,22 @@ def main():
     parser = argparse.ArgumentParser()
     
     parser.add_argument('URL', type=str, help='target URL')
-    parser.add_argument('-c', '--cookies', default="", type=str, help="URL encoded cookie payload separated by semicolon \
-        :some_cookie1 = URL encoded value1; some_cookie2 = URL encoded value2")
+    parser.add_argument('-t', '--TrackingId', default="", type=str, help="TrackingId cookie")
+    parser.add_argument('-s', '--session', default="", type=str, help="Session cookie")
 
     #parse inputs
     args = parser.parse_args()
 
     targetURL = args.URL
+    #strip whitespace and convert unsafe characters to URL
+    trID = up.quote(args.TrackingId.strip())
+    sessID = up.quote(args.session.strip())
+
 
     try:
-        cookies = dict(item.split("=") for item in args.cookies.strip().split(";"))
+        cookies = dict(TrackingId = trID, session = sessID)
     except:
-        print("Cookie format is wrong OR you have not url encoded the values.")
+        print("Cookie format is wrong.")
     
     inTrigger = 10
 
