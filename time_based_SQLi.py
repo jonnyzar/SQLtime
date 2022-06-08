@@ -58,13 +58,16 @@ def sendRequest(URL, inCookies):
 
     res = requests.get(URL,cookies = inCookies)
 
-    try:
-        res.raise_for_status()
-        print(res.status_code)
-    except Exception as e:
-        print(e)
+    status = res.status_code
+    #counts time between request an response
+    elapsed = res.elapsed.total_seconds()
 
 
+    print(status)
+    print(elapsed)
+
+    return elapsed 
+    
 
 #################################### Main ##############################
 
@@ -72,9 +75,10 @@ def main():
 
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('URL', type=str, help='target URL')
     parser.add_argument('-t', '--TrackingId', default="", type=str, help="TrackingId cookie")
     parser.add_argument('-s', '--session', default="", type=str, help="Session cookie")
+    parser.add_argument('URL', type=str, help='target URL')
+
 
     #parse inputs
     args = parser.parse_args()
@@ -88,11 +92,12 @@ def main():
     try:
         cookies = dict(TrackingId = trID, session = sessID)
     except:
-        print("Cookie format is wrong.")
+        print("Cant build cookie. Something is wrong.")
     
+    # trigger in seconds to see if there is error 
     inTrigger = 10
 
-    sendRequest(targetURL, cookies)
+    timeElpased = sendRequest(targetURL, cookies)
 
 
 if __name__ == "__main__":
