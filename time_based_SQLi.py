@@ -63,7 +63,7 @@ def sendRequest(URL, inCookies):
     elapsed = res.elapsed.total_seconds()
 
 
-    print(status)
+    print("Code: ", status)
     print(elapsed)
 
     return elapsed 
@@ -94,10 +94,15 @@ def main():
     except:
         print("Cant build cookie. Something is wrong.")
     
-    # trigger in seconds to see if there is error 
+    # trigger in seconds
     inTrigger = 10
 
     timeElpased = sendRequest(targetURL, cookies)
+
+    if timeElpased >= inTrigger:
+        print("TRUE")
+    else:
+        print("FALSE")
 
 
 if __name__ == "__main__":
